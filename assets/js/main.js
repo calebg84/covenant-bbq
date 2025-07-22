@@ -205,24 +205,38 @@
 
       // Hide message.
       $message._hide()
-
-      // Disable submit.
       $submit.disabled = true
 
-      // Process form.
-      // Note: Doesn't actually do anything yet (other than report back with a "thank you"),
-      // but there's enough here to piece together a working AJAX submission call that does.
-      window.setTimeout(function () {
-        // Reset form.
-        $form.reset()
+      // Prepare form data
+      var formData = new FormData($form)
 
-        // Enable submit.
-        $submit.disabled = false
-
-        // Show message.
-        $message._show('success', 'Thank you!')
-        //$message._show('failure', 'Something went wrong. Please try again.');
-      }, 750)
+      // Send AJAX request to Formspree
+      fetch($form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+        },
+      })
+        .then(function (response) {
+          if (response.ok) {
+            $form.reset()
+            $message._show('success', 'Thank you!')
+          } else {
+            response.json().then(function (data) {
+              $message._show(
+                'failure',
+                data.error || 'Something went wrong. Please try again.'
+              )
+            })
+          }
+        })
+        .catch(function () {
+          $message._show('failure', 'Something went wrong. Please try again.')
+        })
+        .finally(function () {
+          $submit.disabled = false
+        })
     })
   })()
 })()
